@@ -1,0 +1,115 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from mpl_toolkits.mplot3d import Axes3D
+
+#rename DONE
+#conversion function DONE
+#update beta,gamma DONE
+
+
+#total relativistic energy
+eTotalEnergy = 105000 #keV
+
+#total rest energy
+eRestMass = 511 #keV
+
+#gamma/Lorentz factor
+gamma = eTotalEnergy/eRestMass #unitless
+
+#beta (v/c) constant
+beta_0 = (1-(1/gamma)**2)**(1/2) #unitless
+
+
+#initial velocity of particle
+#velocity = beta_0 ##1
+
+#randomly generated theta
+theta = np.pi/4 #unitless
+
+#perpendicular and parallel components of velocity
+#vPerp = beta_0*np.sin(theta) #unitless
+#vParallel = beta_0*np.cos(theta) #unitless
+betaPerp = beta_0*np.sin(theta) #unitless
+betaParallel = beta_0*np.cos(theta) #unitless
+
+#angular velocity, initial magnetic field, B, radius of helix
+    # c,q =1 in natural units
+eMass = eTotalEnergy/gamma #keV
+magField = 2.97*10**-5 #keV^2
+omega = magField/(gamma * eMass) #keV
+helixRadius = betaPerp/omega #1/keV
+
+def keVtocm(lst):
+    newLst = [x * (1.9732705*10**-8) for x in lst]
+    return newLst
+
+def keVtos(lst):
+    newLst = [x * (6.582122*10**-19) for x in lst]
+    return newLst
+    
+    
+def helicalPath():
+    x_coor = []
+    y_coor = []
+    z_coor = []
+    timeLst = []
+    radiationLst = []
+    x,y,z = 0, 0, 0
+    time = 0 
+    helixRadiusUpdate = helixRadius
+    omegaUpdate = omega
+    eMassUpdate = eMass
+    initialEnergy = eTotalEnergy
+    betaUpdate = beta_0
+    betaPerpUpdate = betaPerp
+    betaParallelUpdate = betaParallel
+    while (initialEnergy > 0):
+        timeLst.append(time)
+        omega_c = magField/eMassUpdate #keV
+        dt = 1.0*10**15 #1.1e15 #1/keV
+        emitted_radiation = (1/(4*np.pi))*((2*omega_c**2)/3)*(betaPerpUpdate**2/(1-betaUpdate**2)) * dt
+        radiationLst.append(emitted_radiation)
+        #v_x = vPerp*np.cos(omega_1*time)
+        #v_y = -vPerp*np.sin(omega_1*time)
+        #v_z = betaParallel_1
+        delta_x = helixRadiusUpdate * np.sin(omega_c*time)
+        delta_y = helixRadiusUpdate * np.cos(omega_c*time)
+        delta_z = betaParallelUpdate*time
+        time += dt
+        x_coor.append(x+delta_x)
+        y_coor.append(y+delta_y)
+        z_coor.append(z+delta_z)
+        initialEnergy = initialEnergy - emitted_radiation
+        gammaUpdate = initialEnergy/eRestMass
+        betaUpdate = (1-(1/(gammaUpdate))**2)**(1/2)
+        betaPerpUpdate = betaUpdate * np.sin(theta)
+        betaParallelUpdate = betaUpdate * np.cos(theta)
+        eMassUpdate = initialEnergy/gammaUpdate
+        omegaUpdate = magField/(gammaUpdate * eMassUpdate)
+        helixRadiusUpdate = betaPerpUpdate/omegaUpdate
+        if emitted_radiation < .000001:
+            break
+    fig = plt.figure(figsize=(5,5))
+    ax = fig.add_subplot(111, projection='3d')
+    #ax.scatter(keVtocm(x_coor),keVtocm(y_coor),keVtocm(z_coor), s = .1)
+    ax.plot(keVtocm(x_coor),keVtocm(y_coor),keVtocm(z_coor), color = 'black',linewidth = 0.2)
+    plt.title('Helical Path of a Muon in Uniform Magnetic Field')
+    plt.xlabel('cm')
+    plt.ylabel('cm')
+    plt.show()
+    plt.plot(keVtos(timeLst[1:100]), radiationLst[1:100])
+    plt.xlabel('time [s]')
+    plt.ylabel('emitted radiation')
+    for i in range(len(z_coor)):
+        if z_coor[i] < 2:
+            print(radiationLst[i])
+    
+
+helicalPath()
+    
+    
+    
+    
+    
+    
